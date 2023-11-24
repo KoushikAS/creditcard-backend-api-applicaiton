@@ -2,8 +2,8 @@ from rest_framework import serializers
 
 
 class RequestSerializer(serializers.Serializer):
-    user_ID = serializers.CharField(max_length=100)
-    txn_ID = serializers.CharField(max_length=100)
+    userId = serializers.CharField(max_length=100)
+    txnId = serializers.CharField(max_length=100)
     timeStamp = serializers.CharField()
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
 
@@ -14,3 +14,15 @@ class ResponseSerializer(serializers.Serializer):
     )
     response = serializers.ChoiceField(choices=RESPONSE_CHOICES)
     description = serializers.CharField()
+
+class UserQuickSummarySerializer(serializers.Serializer):
+    userId = serializers.CharField(max_length=100)
+    balance = serializers.DecimalField(max_digits=10, decimal_places=2)
+    available_credit = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+class UserDetailedSummarySerializer(serializers.Serializer):
+    userId = serializers.CharField(max_length=100)
+    balance = serializers.DecimalField(max_digits=10, decimal_places=2)
+    available_credit = serializers.DecimalField(max_digits=10, decimal_places=2)
+    pending_transactions = serializers.ListField(child=serializers.CharField(max_length=50),allow_empty=True,required=False)
+    settled_transactions = serializers.ListField(child=serializers.CharField(max_length=50),allow_empty=True,required=False)

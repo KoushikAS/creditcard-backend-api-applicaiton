@@ -25,4 +25,6 @@ urlpatterns = [
     path('PAYMENT_INITIATED', views.pymt_initiated, name='pymt_initiated'),
     path('PAYMENT_POSTED', views.pymt_posted, name='pymt_posted'),
     path('PAYMENT_CANCELED', views.pymt_canceled, name='pymt_canceled'),
+    path('users/<str:userId>/summary/', views.user_summary, name='user_summary'),
+    path('users/<str:userId>/detailed-summary/', views.user_detailed_summary, name='user_summary'),
 ]
