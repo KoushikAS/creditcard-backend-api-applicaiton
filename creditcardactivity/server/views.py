@@ -1,41 +1,89 @@
-from django.http import JsonResponse
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import *
-from .serializers import *
+from .helper_functions import *
 
-INITIAL_CREDIT = 1000
 
-# Helper functions
+def process_txn_authed(user, txnId, amount, initial_time):
+    user.available_credit -= amount
+    user.save()
 
-def sendResponse(data):
-    # Serialize the response data using ResponseSerializer
-    response = ResponseSerializer(data=data)
+    pending_transaction = Pending_Transaction(userId=user, txnId=txnId, amount=amount, initialTime=initial_time)
+    pending_transaction.save()
 
-    if not response.is_valid():
-        errors = response.errors
-        return JsonResponse({'error': errors}, status=400)
+    return JsonResponse({'response': 'SUCCESS', 'description': 'Successful Authorized Transaction'})
 
-    serialized_data = response.data
-    return JsonResponse(serialized_data)
 
-def get_or_create_user(userId):
-    try:
-        user = User.objects.get(userId=userId)
-    except User.DoesNotExist:
-        user = User(userId=userId, balance=0, available_credit=INITIAL_CREDIT)
-        user.save()
-    return user
+def process_pymt_initiated(user, txnId, amount, initial_time):
+    user.balance += amount
+    user.save()
 
-def validate_request_data(request_data):
-    request_serializer = RequestSerializer(data=request_data)
+    pending_transaction = Pending_Transaction(userId=user, txnId=txnId, amount=amount, initialTime=initial_time)
+    pending_transaction.save()
 
-    if not request_serializer.is_valid():
-        return JsonResponse({'error': request_serializer.errors}, status=400)
+    return JsonResponse({'response': 'SUCCESS', 'description': 'Successful Initiated Payment'})
 
-    return None  # Validation successful
+
+def process_auth_cleared(user, txnId):
+    pending_transaction = Pending_Transaction.objects.filter(userId=user, txnId=txnId, is_canceled=False,
+                                                             is_settled=False).first()
+
+    user.available_credit += pending_transaction.amount
+    user.save()
+    pending_transaction.is_canceled = True
+    pending_transaction.save()
+
+    return JsonResponse({'response': 'SUCCESS', 'description': 'Successful Cleared Auth'})
+
+
+def process_pymt_canceled(user, txnId):
+    pending_transaction = Pending_Transaction.objects.filter(userId=user, txnId=txnId, is_canceled=False,
+                                                             is_settled=False).first()
+
+    user.balance -= pending_transaction.amount
+    user.save()
+    pending_transaction.is_canceled = True
+    pending_transaction.save()
+
+    return JsonResponse({'response': 'SUCCESS', 'description': 'Successful Canceled Payment'})
+
+
+def process_txn_settled(user, txnId, amount, final_time):
+    pending_transaction = Pending_Transaction.objects.filter(userId=user, txnId=txnId, is_canceled=False,
+                                                             is_settled=False).first()
+
+    user.available_credit += pending_transaction.amount
+    user.available_credit -= amount
+    user.balance += amount
+
+    settled_transaction = Settled_Transaction(txnId=txnId, userId=user, amount=amount,
+                                              finalTime=final_time, initialTime=pending_transaction.initialTime)
+    pending_transaction.is_settled = True
+
+    settled_transaction.save()
+    user.save()
+    pending_transaction.save()
+
+    return JsonResponse({'response': 'SUCCESS', 'description': 'Successful Settled Transaction'})
+
+
+def process_pymt_posted(user, txnId, final_time):
+    pending_transaction = Pending_Transaction.objects.filter(userId=user, txnId=txnId, is_canceled=False,
+                                                             is_settled=False).first()
+
+    user.available_credit -= pending_transaction.amount
+
+    settled_transaction = Settled_Transaction(txnId=txnId, userId=user, amount=pending_transaction.amount,
+                                              finalTime=final_time, initialTime=pending_transaction.initialTime)
+    pending_transaction.is_settled = True
+
+    settled_transaction.save()
+    user.save()
+    pending_transaction.save()
+
+    return JsonResponse({'response': 'SUCCESS', 'description': 'Successful Posted Payment'})
+
 
 @swagger_auto_schema(
     method='post',
@@ -45,45 +93,18 @@ def validate_request_data(request_data):
 @api_view(['POST'])
 def txn_authed(request):
     request_data = request.data
-
     validation_error = validate_request_data(request_data)
+
     if validation_error:
         return validation_error
 
-    # Extract data from the deserialized request
-    userId = request_data['userId']
-    txnId = request_data['txnId']
-    timeStamp = request_data['timeStamp']
-    amount = request_data['amount']
+    userId, txnId, timeStamp, amount = extract_request_data(request_data)
 
-    if not Pending_Transaction.objects.filter(txnId=txnId, is_canceled = False).exists():
-
+    if not Pending_Transaction.objects.filter(txnId=txnId).exists():
         user = get_or_create_user(userId)
-        user.available_credit -= amount
-        user.save()
-
-        # Create a new pending transaction
-        pending_transaction = Pending_Transaction(
-            userId=user,
-            txnId=txnId,
-            amount=amount,
-            initialTime=timeStamp,
-        )
-        pending_transaction.save()
-
-        # Prepare the response data
-        response = {
-            'response': 'SUCCESS',
-            'description': 'Successful Authorized Transaction'
-        }
+        return process_txn_authed(user, txnId, amount, timeStamp)
     else:
-        # Prepare the response data
-        response = {
-            'response': 'ERROR',
-            'description': 'Transaction Id already Exists'
-        }
-
-    return sendResponse(response)
+        return JsonResponse({'response': 'ERROR', 'description': 'Transaction Id already Exists'})
 
 
 @swagger_auto_schema(
@@ -94,46 +115,19 @@ def txn_authed(request):
 @api_view(['POST'])
 def txn_settled(request):
     request_data = request.data
-
     validation_error = validate_request_data(request_data)
+
     if validation_error:
         return validation_error
 
-    # Extract data from the deserialized request
-    userId = request_data['userId']
-    txnId = request_data['txnId']
-    timeStamp = request_data['timeStamp']
-    amount = request_data['amount']
+    userId, txnId, timeStamp, amount = extract_request_data(request_data)
 
-    try:
-        # Get the pending transaction based on txnId and userId
-        pending_transaction = Pending_Transaction.objects.get(txnId=txnId, userId__userId=userId, is_settled = False, is_canceled = False )
-
+    if Pending_Transaction.objects.filter(txnId=txnId, userId=userId, is_canceled=False, is_settled=False).exists():
         user = get_or_create_user(userId)
+        return process_txn_settled(user, txnId, amount, timeStamp)
+    else:
+        return JsonResponse({'response': 'ERROR', 'description': 'Transaction Id does not Exists'})
 
-        user.available_credit += pending_transaction.amount
-        user.available_credit -= amount
-        user.balance += amount
-
-        settled_transaction = Settled_Transaction(txnId = txnId, userId = user, amount = amount, eventTime = timeStamp, finalTime = timeStamp,initialTime = pending_transaction.initialTime)
-        pending_transaction.is_settled = True
-
-        settled_transaction.save()
-        user.save()
-        pending_transaction.save()
-
-        response = {
-            'response': 'SUCCESS',
-            'description': 'Successful Authorized Transaction'
-        }
-
-    except Pending_Transaction.DoesNotExist:
-        response = {
-            'response': 'ERROR',
-            'description': 'Transaction Id is not present in pending transaction'
-        }
-
-    return sendResponse(response)
 
 @swagger_auto_schema(
     method='post',
@@ -143,38 +137,19 @@ def txn_settled(request):
 @api_view(['POST'])
 def txn_auth_cleared(request):
     request_data = request.data
-
     validation_error = validate_request_data(request_data)
+
     if validation_error:
         return validation_error
 
-    # Extract data from the deserialized request
-    userId = request_data['userId']
-    txnId = request_data['txnId']
+    userId, txnId, _, _ = extract_request_data(request_data)
 
-    try:
-        # Get the pending transaction based on txnId and userId
-        pending_transaction = Pending_Transaction.objects.get(txnId=txnId, userId__userId=userId, is_settled = False, is_canceled = False)
-
+    if Pending_Transaction.objects.filter(txnId=txnId, is_canceled=False, is_settled=False).exists():
         user = get_or_create_user(userId)
+        return process_auth_cleared(user, txnId)
+    else:
+        return JsonResponse({'response': 'ERROR', 'description': 'Transaction Id does not Exists'})
 
-        user.available_credit += pending_transaction.amount
-        pending_transaction.is_canceled = True
-        user.save()
-        pending_transaction.save()
-
-        response = {
-            'response': 'SUCCESS',
-            'description': 'Successful Cleared Auth Transaction'
-        }
-
-    except Pending_Transaction.DoesNotExist:
-        response = {
-            'response': 'ERROR',
-            'description': 'Transaction Id is not present in pending transaction'
-        }
-
-    return sendResponse(response)
 
 @swagger_auto_schema(
     method='post',
@@ -184,44 +159,19 @@ def txn_auth_cleared(request):
 @api_view(['POST'])
 def pymt_initiated(request):
     request_data = request.data
-
     validation_error = validate_request_data(request_data)
+
     if validation_error:
         return validation_error
 
-    # Extract data from the deserialized request
-    userId = request_data['userId']
-    txnId = request_data['txnId']
-    timeStamp = request_data['timeStamp']
-    amount = int(request_data['amount'])
+    userId, txnId, timeStamp, amount = extract_request_data(request_data)
 
-    if not Pending_Transaction.objects.filter(txnId=txnId, is_canceled = False).exists():
+    if not Pending_Transaction.objects.filter(txnId=txnId).exists():
         user = get_or_create_user(userId)
-        user.balance += amount
-        user.save()
-
-        # Create a new pending transaction
-        pending_transaction = Pending_Transaction(
-            userId=user,
-            txnId=txnId,
-            amount=amount,
-            initialTime=timeStamp
-        )
-        pending_transaction.save()
-
-        # Prepare the response data
-        response = {
-            'response': 'SUCCESS',
-            'description': 'Successful Initiated Payment'
-        }
+        return process_pymt_initiated(user, txnId, -amount, timeStamp)
     else:
-        # Prepare the response data
-        response = {
-            'response': 'ERROR',
-            'description': 'Transaction Id already Exists'
-        }
+        return JsonResponse({'response': 'ERROR', 'description': 'Transaction Id already Exists'})
 
-    return sendResponse(response)
 
 @swagger_auto_schema(
     method='post',
@@ -231,43 +181,18 @@ def pymt_initiated(request):
 @api_view(['POST'])
 def pymt_posted(request):
     request_data = request.data
-
     validation_error = validate_request_data(request_data)
+
     if validation_error:
         return validation_error
 
-    # Extract data from the deserialized request
-    userId = request_data['userId']
-    txnId = request_data['txnId']
-    timeStamp = request_data['timeStamp']
-    amount = request_data['amount']
+    userId, txnId, timeStamp, amount = extract_request_data(request_data)
 
-    try:
-        # Get the pending transaction based on txnId and userId
-        pending_transaction = Pending_Transaction.objects.get(txnId=txnId, userId__userId=userId, is_settled = False, is_canceled = False)
-
+    if Pending_Transaction.objects.filter(txnId=txnId, userId=userId, is_canceled=False, is_settled=False).exists():
         user = get_or_create_user(userId)
-
-        user.available_credit -= pending_transaction.amount
-        settled_transaction = Settled_Transaction(txnId = txnId, userId = user, amount = amount, finalTime = timeStamp,initialTime = pending_transaction.initialTime )
-        pending_transaction.is_settled = True
-
-        settled_transaction.save()
-        user.save()
-        pending_transaction.save()
-
-        response = {
-            'response': 'SUCCESS',
-            'description': 'Successful Posted Payment'
-        }
-
-    except Pending_Transaction.DoesNotExist:
-        response = {
-            'response': 'ERROR',
-            'description': 'Transaction Id is not present in pending transaction'
-        }
-
-    return sendResponse(response)
+        return process_pymt_posted(user, txnId, timeStamp)
+    else:
+        return JsonResponse({'response': 'ERROR', 'description': 'Transaction Id does not Exists'})
 
 
 @swagger_auto_schema(
@@ -278,38 +203,19 @@ def pymt_posted(request):
 @api_view(['POST'])
 def pymt_canceled(request):
     request_data = request.data
-
     validation_error = validate_request_data(request_data)
+
     if validation_error:
         return validation_error
 
-    # Extract data from the deserialized request
-    userId = request_data['userId']
-    txnId = request_data['txnId']
+    userId, txnId, _, _ = extract_request_data(request_data)
 
-    try:
-        # Get the pending transaction based on txnId and userId
-        pending_transaction = Pending_Transaction.objects.get(txnId=txnId, userId__userId=userId, is_settled = False, is_canceled = False)
-
+    if Pending_Transaction.objects.filter(txnId=txnId, is_canceled=False, is_settled=False).exists():
         user = get_or_create_user(userId)
-        pending_transaction.is_canceled = True
+        return process_pymt_canceled(user, txnId)
+    else:
+        return JsonResponse({'response': 'ERROR', 'description': 'Transaction Id does not Exists'})
 
-        user.balance -= pending_transaction.amount
-        user.save()
-        pending_transaction.save()
-
-        response = {
-            'response': 'SUCCESS',
-            'description': 'Successful Canceled Payment'
-        }
-
-    except Pending_Transaction.DoesNotExist:
-        response = {
-            'response': 'ERROR',
-            'description': 'Transaction Id is not present in pending transaction'
-        }
-
-    return sendResponse(response)
 
 @api_view(['GET'])
 def user_summary(request, userId):
@@ -326,6 +232,7 @@ def user_summary(request, userId):
         # Handle the case where the user does not exist
         return Response({'error': 'User not found'}, status=404)
 
+
 @api_view(['GET'])
 def user_detailed_summary(request, userId):
     try:
@@ -336,7 +243,10 @@ def user_detailed_summary(request, userId):
 
         formatted_pending_transactions = []
         for transaction in pending_transactions.reverse():
-            formatted_transaction = f"{transaction.txnId}: {transaction.amount} @ time {transaction.initialTime}"
+            if transaction.is_canceled:
+                formatted_transaction = f"{transaction.txnId}: {transaction.amount} @ time {transaction.initialTime} (Canceled)"
+            else:
+                formatted_transaction = f"{transaction.txnId}: {transaction.amount} @ time {transaction.initialTime}"
             formatted_pending_transactions.append(formatted_transaction)
 
         formatted_settled_transactions = []
@@ -357,7 +267,6 @@ def user_detailed_summary(request, userId):
             'settled_transactions': formatted_settled_transactions,
         })
 
-        print(formatted_pending_transactions)
         # Return the serialized user data as a JSON response
         return Response(serializer.data)
     except User.DoesNotExist:

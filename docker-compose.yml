@@ -11,16 +11,6 @@ services:
         - "5432:5432"
       volumes:
             - data-volume:/var/lib/postgresql/data
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: dummy@duke.edu
-      PGADMIN_DEFAULT_PASSWORD: roots
-    ports:
-      - "5080:80"
-    depends_on:
-      - db
   web-init:
       build: ./creditcardactivity
       command: /code/initserver.sh
