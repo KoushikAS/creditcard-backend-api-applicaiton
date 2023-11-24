@@ -2,7 +2,7 @@ from django.db import models
 
 class User(models.Model):
     userId = models.CharField(max_length=100, primary_key=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    balance = models.DecimalField(max_digits=10, decimal_places=2)
     available_credit = models.DecimalField(max_digits=10, decimal_places=2)
 
 class Pending_Transaction(models.Model):

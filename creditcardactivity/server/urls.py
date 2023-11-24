@@ -20,4 +20,6 @@ from . import views
 
 urlpatterns = [
     path('TXN_AUTHED', views.txn_authed, name='txn_authorised'),
+    path('TXN_SETTLED', views.txn_settled, name='txn_settled'),
+
 ]

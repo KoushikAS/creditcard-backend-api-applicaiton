@@ -53,7 +53,7 @@ def txn_authed(request):
     timeStamp = request_serializer.validated_data['timeStamp']
     amount = request_serializer.validated_data['amount']
 
-    user = getUser(user_id)
+    user = get_or_create_user(user_id)
     user.available_credit -= amount
     user.save()
 
@@ -82,4 +82,52 @@ def txn_authed(request):
     return sendResponse(response)
 
 
+@swagger_auto_schema(
+    method='post',
+    request_body=RequestSerializer,
+    responses={200: ResponseSerializer()}
+)
+@api_view(['POST'])
+def txn_settled(request):
+    # Deserialize the request data using RequestSerializer
+    request_serializer = RequestSerializer(data=request.data)
+
+    if not request_serializer.is_valid():
+        errors = request_serializer.errors
+        return JsonResponse({'error': errors}, status=400)
+
+    # Extract data from the deserialized request
+    user_id = request_serializer.validated_data['user_ID']
+    txn_id = request_serializer.validated_data['txn_ID']
+    timeStamp = request_serializer.validated_data['timeStamp']
+    amount = request_serializer.validated_data['amount']
+
+    try:
+        # Get the pending transaction based on txn_id and user_id
+        pending_transaction = Pending_Transaction.objects.get(txnId=txn_id, userId__userId=user_id)
+
+        user = get_or_create_user(user_id)
+
+        user.available_credit += pending_transaction.amount
+        user.available_credit -= amount
+        user.balance += amount
+
+        settled_transaction = Settled_Transaction(txnId = txn_id, userId = user, amount = amount, eventTime = timeStamp)
+
+        settled_transaction.save()
+        user.save()
+        pending_transaction.delete()
+
+        response = {
+            'response': 'SUCCESS',
+            'description': 'Successful Authorized Transaction'
+        }
+
+    except Pending_Transaction.DoesNotExist:
+        response = {
+            'response': 'ERROR',
+            'description': 'Transaction Id is not present in pending transaction'
+        }
+
+    return sendResponse(response)
 
