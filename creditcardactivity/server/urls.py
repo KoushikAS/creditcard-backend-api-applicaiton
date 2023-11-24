@@ -19,7 +19,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('TXN_AUTHED', views.txn_authed, name='txn_authorised'),
+    path('TXN_AUTHED', views.txn_authed, name='txn_authed'),
     path('TXN_SETTLED', views.txn_settled, name='txn_settled'),
-
+    path('TXN_AUTH_CLEARED', views.txn_auth_cleared, name='txn_auth_cleared'),
+    path('PAYMENT_INITIATED', views.pymt_initiated, name='pymt_initiated'),
+    path('PAYMENT_POSTED', views.pymt_posted, name='pymt_posted'),
+    path('PAYMENT_CANCELED', views.pymt_canceled, name='pymt_canceled'),
 ]
