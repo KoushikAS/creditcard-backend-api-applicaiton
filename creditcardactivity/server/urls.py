@@ -19,12 +19,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('TXN_AUTHED', views.txn_authed, name='txn_authed'),
-    path('TXN_SETTLED', views.txn_settled, name='txn_settled'),
-    path('TXN_AUTH_CLEARED', views.txn_auth_cleared, name='txn_auth_cleared'),
-    path('PAYMENT_INITIATED', views.pymt_initiated, name='pymt_initiated'),
-    path('PAYMENT_POSTED', views.pymt_posted, name='pymt_posted'),
-    path('PAYMENT_CANCELED', views.pymt_canceled, name='pymt_canceled'),
-    path('users/<str:userId>/summary/', views.user_summary, name='user_summary'),
-    path('users/<str:userId>/detailed-summary/', views.user_detailed_summary, name='user_summary'),
+    path('transaction/authorization', views.txn_authed, name='txn_authed'),
+    path('transaction/settled', views.txn_settled, name='txn_settled'),
+    path('transaction/authorization-cleared', views.txn_auth_cleared, name='txn_auth_cleared'),
+    path('payment/initiated', views.pymt_initiated, name='pymt_initiated'),
+    path('payment/posted', views.pymt_posted, name='pymt_posted'),
+    path('payment/canceled', views.pymt_canceled, name='pymt_canceled'),
+    path('users/<str:userId>/summary', views.user_summary, name='user_summary'),
+    path('users/<str:userId>/detailed-summary', views.user_detailed_summary, name='user_summary'),
 ]

@@ -9,7 +9,7 @@ from .logic import *
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint authorizes transactions. It requires userID, txnID, timestamp, and amount. Non-existent userIDs trigger the creation of a new user with 1000 credits."
+    operation_description="This endpoint authorizes transactions. It requires userId, txnId, timestamp, and amount. Non-existent userIds trigger the creation of a new user with 1000 credits."
 )
 @api_view(['POST'])
 def txn_authed(request):
@@ -32,7 +32,7 @@ def txn_authed(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to a previously authorized transaction settling. Txn settlement events specify the same txn ID as the corresponding auth event, but they have their own timestamp, and the amount can change."
+    operation_description="This endpoint is to a previously authorized transaction settling. Txn settlement events specify the same txn id as the corresponding auth event, but they have their own timestamp, and the amount can change."
 )
 @api_view(['POST'])
 def txn_settled(request):
@@ -55,7 +55,7 @@ def txn_settled(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to a previously authorized transaction being cleared. Txn cleared events specify the same txn ID as the corresponding auth event, too, and don't specify any amount."
+    operation_description="This endpoint is to a previously authorized transaction being cleared. Txn cleared events specify the same txnId as the corresponding auth event, too. Amount will not be considered as it is not required. "
 )
 @api_view(['POST'])
 def txn_auth_cleared(request):
@@ -101,7 +101,7 @@ def pymt_initiated(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to these correspond to a payment posting. These events are similar to txn settled events, except they don't specify any amount, since payment amounts can't and don't change."
+    operation_description="This endpoint is to these correspond to a payment posting. These events are similar to txn settled events except they don't specify any amount, since payment amounts can't and don't change. Therefore Amount field will be ignored."
 )
 @api_view(['POST'])
 def pymt_posted(request):

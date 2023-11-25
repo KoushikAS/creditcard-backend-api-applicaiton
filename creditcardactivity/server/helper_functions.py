@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.http import JsonResponse
 
 from .models import *
@@ -39,6 +41,5 @@ def extract_request_data(request_data):
     user_id = request_data['userId']
     txn_id = request_data['txnId']
     timeStamp = request_data['timeStamp']
-    amount = int(request_data['amount'])
-    print(amount)
+    amount = Decimal(request_data['amount'])
     return user_id, txn_id, timeStamp, amount

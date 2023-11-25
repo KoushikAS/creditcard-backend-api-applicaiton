@@ -1,11 +1,14 @@
+import decimal
+
+from django.utils import timezone
 from rest_framework import serializers
 
 
 class RequestSerializer(serializers.Serializer):
     userId = serializers.CharField(max_length=100)
     txnId = serializers.CharField(max_length=100)
-    timeStamp = serializers.CharField()
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    timeStamp = serializers.CharField(required=False, default=timezone.now().isoformat())
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, default=decimal.Decimal('0.00'))
 
 class ResponseSerializer(serializers.Serializer):
     RESPONSE_CHOICES = (
