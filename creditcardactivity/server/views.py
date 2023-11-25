@@ -8,7 +8,8 @@ from .logic import *
 @swagger_auto_schema(
     method='post',
     request_body=RequestSerializer,
-    responses={200: ResponseSerializer()}
+    responses={200: ResponseSerializer()},
+    operation_description="This endpoint authorizes transactions. It requires userID, txnID, timestamp, and amount. Non-existent userIDs trigger the creation of a new user with 1000 credits."
 )
 @api_view(['POST'])
 def txn_authed(request):
@@ -30,7 +31,8 @@ def txn_authed(request):
 @swagger_auto_schema(
     method='post',
     request_body=RequestSerializer,
-    responses={200: ResponseSerializer()}
+    responses={200: ResponseSerializer()},
+    operation_description="This endpoint is to a previously authorized transaction settling. Txn settlement events specify the same txn ID as the corresponding auth event, but they have their own timestamp, and the amount can change."
 )
 @api_view(['POST'])
 def txn_settled(request):
@@ -52,7 +54,8 @@ def txn_settled(request):
 @swagger_auto_schema(
     method='post',
     request_body=RequestSerializer,
-    responses={200: ResponseSerializer()}
+    responses={200: ResponseSerializer()},
+    operation_description="This endpoint is to a previously authorized transaction being cleared. Txn cleared events specify the same txn ID as the corresponding auth event, too, and don't specify any amount."
 )
 @api_view(['POST'])
 def txn_auth_cleared(request):
@@ -74,7 +77,8 @@ def txn_auth_cleared(request):
 @swagger_auto_schema(
     method='post',
     request_body=RequestSerializer,
-    responses={200: ResponseSerializer()}
+    responses={200: ResponseSerializer()},
+    operation_description="This endpoint is to a payment being initiated. These events are similar to txn auth events. Enter the Payment amount in postive, I have taken care to make it negative in backend since they lower the balance."
 )
 @api_view(['POST'])
 def pymt_initiated(request):
@@ -96,7 +100,8 @@ def pymt_initiated(request):
 @swagger_auto_schema(
     method='post',
     request_body=RequestSerializer,
-    responses={200: ResponseSerializer()}
+    responses={200: ResponseSerializer()},
+    operation_description="This endpoint is to these correspond to a payment posting. These events are similar to txn settled events, except they don't specify any amount, since payment amounts can't and don't change."
 )
 @api_view(['POST'])
 def pymt_posted(request):
@@ -118,7 +123,8 @@ def pymt_posted(request):
 @swagger_auto_schema(
     method='post',
     request_body=RequestSerializer,
-    responses={200: ResponseSerializer()}
+    responses={200: ResponseSerializer()},
+    operation_description="This endpoint is to these correspond to a payment getting canceled. These events are similar to txn cleared events."
 )
 @api_view(['POST'])
 def pymt_canceled(request):

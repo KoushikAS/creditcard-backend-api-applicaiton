@@ -4,10 +4,10 @@ from django.urls import path
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Pomelo Demo APP",
+        title="Pomelo App",
         default_version="v1",
-        description="Demo app for showcasing the pomelo app",
-        contact=openapi.Contact(email="KoushikAnnareddySreenath@duke.com"),
+        description="A demonstration application for Pomelo coding test implemented by Koushik Annareddy Sreenath. See detailed requirements [GitHub Gist](https://gist.github.com/aseemk/89aaa72d4d60c5448307250ca0179f5c).",
+        contact=openapi.Contact(email="koushik.annareddysreenath@duke.com"),
     ),
     public=True,
     permission_classes=(),
