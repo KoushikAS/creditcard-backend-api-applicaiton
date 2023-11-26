@@ -30,7 +30,6 @@ services:
         - db
   web:
       build: ./creditcardactivity
-      user: nobody
       command: /code/runserver.sh
       volumes:
         - ./creditcardactivity:/code
