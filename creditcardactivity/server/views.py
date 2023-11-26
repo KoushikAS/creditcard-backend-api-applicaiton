@@ -55,7 +55,7 @@ def txn_settled(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to a previously authorized transaction being cleared. Txn cleared events specify the same txnId as the corresponding auth event, too. Amount will not be considered as it is not required. "
+    operation_description="This endpoint is to a previously authorized transaction being cleared. Txn cleared events specify the same txnId as the corresponding auth event, too. (Amount and timestamp field will be ignored as it is not required.) "
 )
 @api_view(['POST'])
 def txn_auth_cleared(request):
@@ -101,7 +101,7 @@ def pymt_initiated(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to these correspond to a payment posting. These events are similar to txn settled events except they don't specify any amount, since payment amounts can't and don't change. Therefore Amount field will be ignored."
+    operation_description="This endpoint is to these correspond to a payment posting. These events are similar to txn settled events. (Since payment amounts can't and don't change. Therefore Amount and timestamp field will be ignored)."
 )
 @api_view(['POST'])
 def pymt_posted(request):

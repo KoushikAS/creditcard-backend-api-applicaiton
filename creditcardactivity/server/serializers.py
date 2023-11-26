@@ -7,7 +7,7 @@ from rest_framework import serializers
 class RequestSerializer(serializers.Serializer):
     userId = serializers.CharField(max_length=100)
     txnId = serializers.CharField(max_length=100)
-    timeStamp = serializers.CharField(required=False, default=timezone.now().isoformat())
+    timeStamp = serializers.CharField(required=False, default=timezone.now().strftime('%Y-%m-%d %H:%M:%S'))
     amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, default=decimal.Decimal('0.00'))
 
 class ResponseSerializer(serializers.Serializer):
