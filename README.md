@@ -61,8 +61,8 @@ The service includes the following endpoints:
 - POST /payment/initiated: Initiates a payment.
 - POST /payment/posted: Posts a payment.
 - POST /payment/canceled: Cancels a payment.
-- GET /users/<userId>/summary: Retrieves a quick summary of the user's transactions.
-- GET /users/<userId>/detailed-summary: Retrieves a detailed summary of the user's transactions.
+- GET /users/< userId >/summary: Retrieves a quick summary of the user's transactions.
+- GET /users/< userId >/detailed-summary: Retrieves a detailed summary of the user's transactions.
 
 Each endpoint accepts specific parameters and returns a JSON response as documented in the Swagger UI.
 

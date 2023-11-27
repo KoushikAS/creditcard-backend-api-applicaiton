@@ -32,7 +32,7 @@ def txn_authed(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to a previously authorized transaction settling. Txn settlement events specify the same txn id as the corresponding auth event, but they have their own timestamp, and the amount can change."
+    operation_description="This endpoint correspond to a previously authorized transaction settling. Txn settlement events specify the same txn id as the corresponding auth event, but they have their own timestamp, and the amount can change."
 )
 @api_view(['POST'])
 def txn_settled(request):
@@ -55,7 +55,7 @@ def txn_settled(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to a previously authorized transaction being cleared. Txn cleared events specify the same txnId as the corresponding auth event, too. (Amount and timestamp field will be ignored as it is not required.) "
+    operation_description="This endpoint correspond to a previously authorized transaction being cleared. Txn cleared events specify the same txnId as the corresponding auth event, too. (Amount and timestamp field will be ignored as it is not required.) "
 )
 @api_view(['POST'])
 def txn_auth_cleared(request):
@@ -78,7 +78,7 @@ def txn_auth_cleared(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to a payment being initiated. These events are similar to txn auth events. Enter the Payment amount in postive, I have taken care to make it negative in backend since they lower the balance."
+    operation_description="This endpoint correspond to a payment being initiated. These events are similar to txn auth events. Enter the Payment amount in postive, I have taken care to make it negative in backend since they lower the balance."
 )
 @api_view(['POST'])
 def pymt_initiated(request):
@@ -101,7 +101,7 @@ def pymt_initiated(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to these correspond to a payment posting. These events are similar to txn settled events. (Since payment amounts can't and don't change. Therefore Amount and timestamp field will be ignored)."
+    operation_description="This endpoint correspond to a payment posting. These events are similar to txn settled events. (Since payment amounts can't and don't change. Therefore Amount and timestamp field will be ignored)."
 )
 @api_view(['POST'])
 def pymt_posted(request):
@@ -124,7 +124,7 @@ def pymt_posted(request):
     method='post',
     request_body=RequestSerializer,
     responses={200: ResponseSerializer()},
-    operation_description="This endpoint is to these correspond to a payment getting canceled. These events are similar to txn cleared events."
+    operation_description="This endpoint correspond to a payment getting canceled. These events are similar to txn cleared events."
 )
 @api_view(['POST'])
 def pymt_canceled(request):
@@ -142,7 +142,10 @@ def pymt_canceled(request):
     else:
         return JsonResponse({'response': 'ERROR', 'description': 'Transaction Id does not Exists'})
 
-
+@swagger_auto_schema(
+    method='get',
+    operation_description="This endpoint gets the quick summary of the user"
+)
 @api_view(['GET'])
 def user_summary(request, userId):
     try:
@@ -158,7 +161,10 @@ def user_summary(request, userId):
         # Handle the case where the user does not exist
         return Response({'error': 'User not found'}, status=404)
 
-
+@swagger_auto_schema(
+    method='get',
+    operation_description="This endpoint gets the detailed summary of the user"
+)
 @api_view(['GET'])
 def user_detailed_summary(request, userId):
     try:
