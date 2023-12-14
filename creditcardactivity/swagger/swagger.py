@@ -4,7 +4,7 @@ from django.urls import path
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Pomelo App",
+        title="Demo Credit Card Application",
         default_version="v1",
         description="A demonstration application for Pomelo coding test implemented by Koushik Annareddy Sreenath. See detailed requirements [GitHub Gist](https://gist.github.com/aseemk/89aaa72d4d60c5448307250ca0179f5c).",
         contact=openapi.Contact(email="koushik.annareddysreenath@duke.com"),
