@@ -1,4 +1,4 @@
-# Pomelo Transaction API
+# Credit Card Demmo Backend API Application
 
 This repository contains a Django-based backend service that simulates transaction handling and summary views for a fictional application. It includes a REST API with endpoints for transaction authorization, settlement, clearing, and more. The service uses PostgreSQL for data persistence and Docker for easy setup and deployment.
 
