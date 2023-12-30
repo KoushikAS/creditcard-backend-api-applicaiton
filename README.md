@@ -20,8 +20,8 @@ This repository contains a Django-based backend service that simulates transacti
 1. Clone the repository to your local machine:
 
 ```sh
-git clone https://github.com/KoushikAS/pomelo-test.git
-cd pomelo-test
+git clone https://github.com/KoushikAS/creditcard-backend-api-applicaiton.git
+cd creditcard-backend-api-applicaiton
 ```
 ## Start the application using Docker Compose:
 
